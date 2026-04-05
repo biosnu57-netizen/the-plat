@@ -78,8 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Challenge',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.link),
-            label: 'External',
+            icon: Icon(Icons.bolt),
+            label: 'Game Intel',
           ),
         ],
       ),
