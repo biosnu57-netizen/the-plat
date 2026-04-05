@@ -1,9 +1,28 @@
 // PINC Network - Core App
-// AI #1: Core App Engineer
+// AI #6: Integration Engineer
 // Main entry point with 6 tabs: PINC Net, Wallet, Chat, Jobs, Games, Profile
+// Integrated from: ai1-core, ai2-security, ai3-games, ai4-finance
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+
+// Game imports (from ai3-games)
+import 'games/connect4.dart';
+import 'games/tictactoe.dart';
+import 'games/snake.dart';
+import 'games/tetris.dart';
+import 'games/chess.dart';
+import 'games/wordle.dart';
+
+// Finance imports (from ai4-finance via kingsto)
+import 'screens/wallet_home_screen.dart';
+import 'screens/send_money_screen.dart';
+import 'screens/deposit_screen.dart';
+import 'screens/withdraw_screen.dart';
+import 'screens/escrow_screen.dart';
+
+// Security module (from ai2-security)
+import 'security_module.dart';
 
 void main() => runApp(const PincNetworkApp());
 
@@ -414,7 +433,7 @@ class _PincNetTabState extends State<PincNetTab> {
   }
 }
 
-// ==================== TAB 2: WALLET ====================
+// ==================== TAB 2: WALLET (Integrated with ai4-finance) ====================
 class WalletTab extends StatelessWidget {
   const WalletTab({super.key});
 
@@ -427,32 +446,54 @@ class WalletTab extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(children: [
           // Balance Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFF00D4AA), Color(0xFF00FF94)]),
-              borderRadius: BorderRadius.all(Radius.circular(24)),
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletHomeScreen())),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFF00D4AA), Color(0xFF00FF94)]),
+                borderRadius: BorderRadius.all(Radius.circular(24)),
+              ),
+              child: const Column(children: [
+                Text('PINC Balance', style: TextStyle(color: AppTheme.primaryDark, fontSize: 14)),
+                SizedBox(height: 8),
+                Text('0.00', style: TextStyle(color: AppTheme.primaryDark, fontSize: 48, fontWeight: FontWeight.bold)),
+                Text('≈ \$0.00 USD', style: TextStyle(color: AppTheme.primaryDark)),
+              ]),
             ),
-            child: const Column(children: [
-              Text('PINC Balance', style: TextStyle(color: AppTheme.primaryDark, fontSize: 14)),
-              SizedBox(height: 8),
-              Text('0.00', style: TextStyle(color: AppTheme.primaryDark, fontSize: 48, fontWeight: FontWeight.bold)),
-              Text('≈ \$0.00 USD', style: TextStyle(color: AppTheme.primaryDark)),
-            ]),
           ),
           const SizedBox(height: 20),
 
-          // Actions
+          // Actions - navigate to finance screens
           Row(children: [
-            _walletAction(Icons.arrow_upward, 'Send', () {}),
-            _walletAction(Icons.arrow_downward, 'Receive', () {}),
-            _walletAction(Icons.swap_horiz, 'Swap', () {}),
-            _walletAction(Icons.add_circle, 'Buy', () {}),
+            _walletAction(context, Icons.arrow_upward, 'Send', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SendMoneyScreen()))),
+            _walletAction(context, Icons.arrow_downward, 'Receive', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepositScreen()))),
+            _walletAction(context, Icons.add_circle, 'Deposit', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepositScreen()))),
+            _walletAction(context, Icons.remove_circle, 'Withdraw', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WithdrawScreen()))),
           ]),
           const SizedBox(height: 24),
 
-          // Info section
+          // Escrow Section
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EscrowScreen())),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(12)),
+              child: const Row(children: [
+                Icon(Icons.verified_user, color: AppTheme.accentCyan),
+                SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Secure Escrow', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text('Protected transactions', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                ])),
+                Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Recent Transactions
           const Align(alignment: Alignment.centerLeft, child: Text('Recent Transactions', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
           const SizedBox(height: 12),
           
@@ -470,7 +511,7 @@ class WalletTab extends StatelessWidget {
     );
   }
 
-  Widget _walletAction(IconData icon, String label, VoidCallback onTap) {
+  Widget _walletAction(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -874,12 +915,30 @@ class GamesTab extends StatelessWidget {
   }
 
   void _openGame(BuildContext context, String gameName) {
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.surfaceColor,
-      title: Text(gameName, style: const TextStyle(color: Colors.white)),
-      content: const Text('Game starting... (AI #3 will implement this)', style: TextStyle(color: Colors.grey)),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
-    ));
+    Widget? gameScreen;
+    switch (gameName) {
+      case 'Connect 4':
+        gameScreen = const Connect4Screen();
+        break;
+      case 'Tic Tac Toe':
+        gameScreen = const TicTacToeScreen();
+        break;
+      case 'Snake':
+        gameScreen = const SnakeScreen();
+        break;
+      case 'Tetris':
+        gameScreen = const TetrisScreen();
+        break;
+      case 'Chess':
+        gameScreen = const ChessScreen();
+        break;
+      case 'Wordle':
+        gameScreen = const WordleScreen();
+        break;
+    }
+    if (gameScreen != null) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => gameScreen!));
+    }
   }
 
   void _showCreateChallenge(BuildContext context) {
